@@ -19,7 +19,7 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
     PanelId ! {updateProp, "Round: " 
             ++ io_lib:format("~p", [Round]), "Proposal: "
             ++ io_lib:format("~p", [Proposal]), Proposal},
-    case ballot(Name, ..., ..., ..., PanelId) of
+    case ballot(Name, Round, Proposal, Acceptors, PanelId) of
         {ok, Decision} ->
             io:format("[Proposer ~w] ~w DECIDED ~w in round ~w~n", 
             [Name, Acceptors, Decision, Round]),
@@ -27,15 +27,15 @@ round(Name, Backoff, Round, Proposal, Acceptors, PanelId) ->
             {ok, Decision};
         abort ->
             timer:sleep(rand:uniform(Backoff)),
-            Next = order:inc(...),
-            round(Name, (2*Backoff), ..., Proposal, Acceptors, PanelId)
+            Next = order:inc(Round),
+            round(Name, (2*Backoff), Next, Proposal, Acceptors, PanelId)
     end.
 
 ballot(Name, Round, Proposal, Acceptors, PanelId) ->
-    prepare(..., ...),
-    Quorum = (length(...) div 2) + 1,
+    prepare(Round, Acceptors),
+    Quorum = (length(Acceptors) div 2) + 1,
     MaxVoted = order:null(),
-    case collect(..., ..., ..., ...) of
+    case collect(Quorum, Round, MaxVoted, Proposal) of
         {accepted, Value} ->
             % update gui
             io:format("[Proposer ~w] Phase 2: round ~w proposal ~w (was ~w)~n", 
@@ -43,10 +43,10 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
             PanelId ! {updateProp, "Round: " 
                     ++ io_lib:format("~p", [Round]), "Proposal: "
                     ++ io_lib:format("~p", [Value]), Value},
-            accept(..., ..., ...),
-            case vote(..., ...) of
+            accept(Round, Proposal, Acceptors),
+            case vote(Quorum, Round) of
                 ok ->
-                    {ok, ...};
+                    {ok, Value};
                 abort ->
                     abort
             end;
@@ -59,18 +59,18 @@ collect(0, _, _, Proposal) ->
 collect(N, Round, MaxVoted, Proposal) ->
     receive 
         {promise, Round, _, na} ->
-            collect(..., ..., ..., ...);
+            collect(N-1, Round, MaxVoted, Proposal);
         {promise, Round, Voted, Value} ->
-            case order:gr(..., ...) of
+            case order:gr(Voted, MaxVoted) of
                 true ->
-                    collect(..., ..., ..., ...);
+                    collect(N-1, Round, Voted, Value);
                 false ->
-                    collect(..., ..., ..., ...)
+                    collect(N-1, Round, MaxVoted, Proposal)
             end;
-        {promise, _, _,  _} ->
+        {promise, _, _, _} ->
             collect(N, Round, MaxVoted, Proposal);
         {sorry, {prepare, Round}} ->
-            collect(..., ..., ..., ...);
+            collect(N, Round, MaxVoted, Proposal);
         {sorry, _} ->
             collect(N, Round, MaxVoted, Proposal)
     after ?timeout ->
@@ -82,11 +82,11 @@ vote(0, _) ->
 vote(N, Round) ->
     receive
         {vote, Round} ->
-            vote(..., ...);
+            vote(N-1, Round);
         {vote, _} ->
             vote(N, Round);
         {sorry, {accept, Round}} ->
-            vote(..., ...);
+            vote(N, Round);
         {sorry, _} ->
             vote(N, Round)
     after ?timeout ->
