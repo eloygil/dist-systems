@@ -43,7 +43,7 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
             PanelId ! {updateProp, "Round: " 
                     ++ io_lib:format("~p", [Round]), "Proposal: "
                     ++ io_lib:format("~p", [Value]), Value},
-            accept(Round, Proposal, Acceptors),
+            accept(Round, Value, Acceptors),
             case vote(Quorum, Round) of
                 ok ->
                     {ok, Value};
