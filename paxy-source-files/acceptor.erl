@@ -1,6 +1,9 @@
 -module(acceptor).
 -export([start/2]).
 
+-define(delay, 1500).
+-define(drop, 2).
+
 start(Name, PanelId) ->
     spawn(fun() -> init(Name, PanelId) end).
         
@@ -13,9 +16,17 @@ init(Name, PanelId) ->
 acceptor(Name, Promised, Voted, Value, PanelId) ->
   receive
     {prepare, Proposer, Round} ->
+        %R = rand:uniform(?delay),
+        %timer:sleep(R),
         case order:gr(Round, Promised) of
             true ->
-                Proposer ! {promise, Round, Voted, Value},               
+
+            case rand:uniform(?drop) of
+                ?drop ->
+                    io:format("message dropped~n");
+                _ -> Proposer ! {promise, Round, Voted, Value}   
+            end,
+                            
                 % Update gui
                 if
                     Value == na ->
@@ -30,13 +41,19 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                         ++ io_lib:format("~p", [Round]), Colour},
                 acceptor(Name, Round, Voted, Value, PanelId);
             false ->
-                Proposer ! {sorry, {prepare, Round}},
+                %Proposer ! {sorry, {prepare, Round}},
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     {accept, Proposer, Round, Proposal} ->
+        %R = rand:uniform(?delay),
+        %timer:sleep(R),
         case order:goe(Round, Promised) of
             true ->
-                Proposer ! {vote, Round},
+                case rand:uniform(?drop) of
+                    ?drop ->
+                        io:format("message dropped~n");
+                    _ -> Proposer ! {vote, Round}
+                end,
                 case order:goe(Voted, Round) of
                     true ->
                         % Update gui
@@ -56,7 +73,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                         acceptor(Name, Promised, Round, Proposal, PanelId)
                 end;                            
             false ->
-                Proposer ! {sorry, {accept, Round}},
+                %Proposer ! {sorry, {accept, Round}},
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     stop ->
