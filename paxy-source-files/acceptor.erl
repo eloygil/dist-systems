@@ -21,11 +21,12 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
         case order:gr(Round, Promised) of
             true ->
 
-            case rand:uniform(?drop) of
-                ?drop ->
-                    io:format("message dropped~n");
-                _ -> Proposer ! {promise, Round, Voted, Value}   
-            end,
+            %case rand:uniform(?drop) of
+            %    ?drop ->
+            %        io:format("message dropped~n");
+            %    _ -> Proposer ! {promise, Round, Voted, Value}   
+            %end,
+            Proposer ! {promise, Round, Voted, Value},
                             
                 % Update gui
                 if
@@ -49,11 +50,12 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
         %timer:sleep(R),
         case order:goe(Round, Promised) of
             true ->
-                case rand:uniform(?drop) of
-                    ?drop ->
-                        io:format("message dropped~n");
-                    _ -> Proposer ! {vote, Round}
-                end,
+                %case rand:uniform(?drop) of
+                %    ?drop ->
+                %        io:format("message dropped~n");
+                %    _ -> Proposer ! {vote, Round}
+                %end,
+                Proposer ! {vote, Round},
                 case order:goe(Voted, Round) of
                     true ->
                         % Update gui
