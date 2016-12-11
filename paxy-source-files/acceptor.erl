@@ -6,8 +6,12 @@
 
 start(Name, PanelId) ->
     spawn(fun() -> init(Name, PanelId) end).
-        
+
+init(Name, na) ->
+    {Promised, Voted, Value, PanelId} = pers:read(Name),
+    acceptor(Name, Promised, Voted, Value, PanelId);  
 init(Name, PanelId) ->
+    _ = pers:read(Name),
     Promised = order:null(), 
     Voted = order:null(),
     Value = na,
@@ -40,9 +44,10 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                 PanelId ! {updateAcc, "Voted: " 
                         ++ io_lib:format("~p", [Voted]), "Promised: " 
                         ++ io_lib:format("~p", [Round]), Colour},
+                pers:store(Name, Round, Voted, Value, PanelId),
                 acceptor(Name, Round, Voted, Value, PanelId);
             false ->
-                %Proposer ! {sorry, {prepare, Round}},
+                Proposer ! {sorry, {prepare, Round}},
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     {accept, Proposer, Round, Proposal} ->
@@ -64,6 +69,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                         PanelId ! {updateAcc, "Voted: " 
                                 ++ io_lib:format("~p", [Voted]), "Promised: " 
                                 ++ io_lib:format("~p", [Promised]), Value},
+                        pers:store(Name, Promised, Voted, Value, PanelId),
                         acceptor(Name, Promised, Voted, Value, PanelId);
                     false ->
                         % Update gui
@@ -72,13 +78,15 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                         PanelId ! {updateAcc, "Voted: " 
                                 ++ io_lib:format("~p", [Round]), "Promised: " 
                                 ++ io_lib:format("~p", [Promised]), Proposal},
+                        pers:store(Name, Promised, Round, Proposal, PanelId),
                         acceptor(Name, Promised, Round, Proposal, PanelId)
                 end;                            
             false ->
-                %Proposer ! {sorry, {accept, Round}},
+                Proposer ! {sorry, {accept, Round}},
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     stop ->
+        pers:delete(Name),
         PanelId ! stop,
         ok
   end.
