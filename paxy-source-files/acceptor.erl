@@ -1,11 +1,17 @@
 -module(acceptor).
--export([start/2]).
+-export([start/2, startdist/2, startdist2/2]).
 
 -define(delay, 1500).
 -define(drop, 2).
 
 start(Name, PanelId) ->
     spawn(fun() -> init(Name, PanelId) end).
+
+startdist(Name, PanelId) ->
+    init(Name, PanelId).
+
+startdist2(Name, PanelId) ->
+    register(Name, spawn(fun() -> init(Name, PanelId) end)).
 
 init(Name, na) ->
     %pers:open(Name),

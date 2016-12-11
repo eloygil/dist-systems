@@ -1,11 +1,14 @@
 -module(proposer).
--export([start/5]).
+-export([start/5, startdist/5]).
 
 -define(timeout, 2000).
 -define(backoff, 10).
 
 start(Name, Proposal, Acceptors, Sleep, PanelId) ->
     spawn(fun() -> init(Name, Proposal, Acceptors, Sleep, PanelId) end).
+
+startdist(Name, Proposal, Acceptors, Sleep, PanelId) ->
+    init(Name, Proposal, Acceptors, Sleep, PanelId).
 
 init(Name, Proposal, Acceptors, Sleep, PanelId) ->
     timer:sleep(Sleep),
@@ -164,4 +167,7 @@ send(Name, Message) ->
                 Pid ! Message
         end
 end.
+
+%send(Name, Message) ->
+%    global:send(Name, Message).
 

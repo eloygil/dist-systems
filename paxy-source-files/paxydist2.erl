@@ -1,4 +1,4 @@
--module(paxydist).
+-module(paxydist2).
 -export([start/1, stop/0, stop/1, crash/1]).
 
 -define(RED, {255,0,0}).
@@ -8,7 +8,7 @@
 -define(PINK, {255,0,255}).
 -define(CYAN, {0,255,255}).
 
-%Having global registers
+%Having local registers
 
 % Sleep is a list with the initial sleep time for each proposer
 start(Sleep) ->
@@ -17,6 +17,8 @@ start(Sleep) ->
     % NewAcceptorNames = ["Acceptor a", "Acceptor b", "Acceptor c", 
     % "Acceptor d", "Acceptor e", "Acceptor f", "Acceptor g", "Acceptor h", "Acceptor i" ],
     AccRegister = [a, b, c, d, e],
+    TupleRegister = [{a, 'acceptors@127.0.0.1'}, {b, 'acceptors@127.0.0.1'},
+    {c, 'acceptors@127.0.0.1'}, {d, 'acceptors@127.0.0.1'}, {e, 'acceptors@127.0.0.1'}],
     %NewAccRegister = [a, b, c, d, e, f, g, h, i],
     ProposerNames = [{"Proposer kurtz", ?RED}, {"Proposer kilgore", ?GREEN}, 
                      {"Proposer willard", ?BLUE}],
@@ -30,21 +32,17 @@ start(Sleep) ->
         {reqState, State} ->
             {AccIds, PropIds} = State,
             start_acceptors(AccIds, AccRegister),
-            start_proposers(PropIds, PropInfo, AccRegister, Sleep)
+            start_proposers(PropIds, PropInfo, TupleRegister, Sleep)
     end,
     true.
     
-%start_acceptors([], _) -> [];
-%start_acceptors([AccId|Rest], [RegName|RegNameRest]) ->
-%    [spawn('acceptors@127.0.0.1', acceptor, start, [RegName, AccId]) | start_acceptors(Rest, RegNameRest)].
-
 start_acceptors(AccIds, AccReg) ->
     case AccIds of
         [] ->
             ok;
         [AccId|Rest] ->
             [RegName|RegNameRest] = AccReg,
-            global:register_name(RegName, spawn('acceptors@127.0.0.1', acceptor, startdist, [RegName, AccId])),
+            spawn('acceptors@127.0.0.1', acceptor, startdist2, [RegName, AccId]),
             start_acceptors(Rest, RegNameRest)
     end.
 
@@ -61,15 +59,6 @@ start_proposers(PropIds, PropInfo, Acceptors, Sleep) ->
         end.
 
 stop() ->
-    stop(a),
-    stop(b),
-    stop(c),
-    stop(d),
-    stop(e),
-    % stop(f),
-    % stop(g),
-    % stop(h),
-    % stop(i),
     stop(gui).
 
 stop(Name) ->
