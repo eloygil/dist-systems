@@ -38,6 +38,7 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
     prepare(Round, Acceptors),
     Quorum = (length(Acceptors) div 2) + 1,
     MaxVoted = order:null(),
+    %to be uncommented in order to use the improvement of the sorry messages
     %case collect(Quorum, Quorum, Round, MaxVoted, Proposal) of
     case collect(Quorum, Round, MaxVoted, Proposal) of
         {accepted, Value} ->
@@ -48,6 +49,7 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
                     ++ io_lib:format("~p", [Round]), "Proposal: "
                     ++ io_lib:format("~p", [Value]), Value},
             accept(Round, Value, Acceptors),
+            %to be uncommented in order to use the improvement of the sorry messages
             %case vote(Quorum, Quorum, Round) of
             case vote(Quorum, Round) of
                 ok ->
