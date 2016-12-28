@@ -1,11 +1,11 @@
 -module(client).
 -export([start/5,startdist/5]).
 
--define(size, 3).
+-define(size, 1).
 
 start(ClientID, Entries, Reads, Writes, Server) ->
     spawn(fun() -> open(ClientID, Entries, Reads, Writes, Server, 0, 0) end).
-    %spawn(fun() -> open(ClientID, rand:uniform(Entries-size), Reads, Writes, Server, 0, 0) end).
+    %spawn(fun() -> open(ClientID, rand:uniform(Entries-?size), Reads, Writes, Server, 0, 0) end).
 
 startdist(ClientID, Entries, Reads, Writes, Server) ->
     open(ClientID, Entries, Reads, Writes, Server, 0, 0).
@@ -49,7 +49,7 @@ do_transaction(ClientID, Entries, Reads, Writes, Handler) ->
 do_read(Entries, Handler) ->
     Ref = make_ref(),
     Num = rand:uniform(Entries),
-    %Num = rand:uniform(size),
+    %Num = rand:uniform(?size),
     Handler ! {read, Ref, Num},
     %Handler ! {read, Ref, Entries+Num},
     receive
@@ -58,7 +58,7 @@ do_read(Entries, Handler) ->
 
 do_write(Entries, Handler, Value) ->
     Num = rand:uniform(Entries),
-    %Num = rand:uniform(size),
+    %Num = rand:uniform(?size),
     Handler ! {write, Num, Value}.
     %Handler ! {write, Entries+Num, Value}.
 
