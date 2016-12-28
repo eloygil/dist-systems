@@ -1,8 +1,12 @@
 -module(server).
--export([start/1]).
+-export([start/1,startdist/1]).
 
 start(N) ->
     spawn(fun() -> init(N) end).
+
+startdist(N) ->
+    register(s,self()),
+    init(N).
 
 init(N) ->
     Store = store:new(N),

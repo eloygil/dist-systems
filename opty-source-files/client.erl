@@ -1,11 +1,14 @@
 -module(client).
--export([start/5]).
+-export([start/5,startdist/5]).
 
 -define(size, 3).
 
 start(ClientID, Entries, Reads, Writes, Server) ->
     spawn(fun() -> open(ClientID, Entries, Reads, Writes, Server, 0, 0) end).
     %spawn(fun() -> open(ClientID, rand:uniform(Entries-size), Reads, Writes, Server, 0, 0) end).
+
+startdist(ClientID, Entries, Reads, Writes, Server) ->
+    open(ClientID, Entries, Reads, Writes, Server, 0, 0).
 
 open(ClientID, Entries, Reads, Writes, Server, Total, Ok) ->
     Server ! {open, self()},
